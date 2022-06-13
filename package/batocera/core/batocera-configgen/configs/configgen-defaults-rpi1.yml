@@ -1,49 +1,64 @@
 default:
   options:
-    videomode:      CEA 4 HDMI
+    hud_support: false
     video_threaded: true
+    ratio: "4/3"
     smooth:         false
+    audio_latency:  256
+    # menu retroarch
+    retroarch.menu_driver: rgui
 
-amiga500:
-  emulator: amiberry
-  core:     A500
-amiga1200:
-  emulator: amiberry
-  core:     A1200
-amigacd32:
-  emulator: amiberry
-  core:     CD32
-dos:
-  emulator: dosbox
-  core:     dosbox
 gba:
   emulator: libretro
   core:     gpsp
 mame:
   emulator: libretro
   core:     imame4all
+gamegear:
+  emulator: libretro
+  core:     picodrive
 mastersystem:
   emulator: libretro
   core:     picodrive
 megadrive:
   emulator: libretro
   core:     picodrive
+segacd:
+  emulator: libretro
+  core:     picodrive
+satellaview:
+  emulator: libretro
+  core:     pocketsnes
 snes:
   emulator: libretro
   core:     pocketsnes
+snes-msu1:
+  emulator: libretro
+  core:     pocketsnes
 c64:
-  emulator: vice
-  core:     x64
-c128:
-  emulator: vice
-  core:     x128
+  emulator: libretro
+  core:     vice_x64
 c20:
-  emulator: vice
-  core:     xvic
-pet:
-  emulator: vice
-  core:     xpet
+  emulator: libretro
+  core:     vice_xvic
+c128:
+  emulator: libretro
+  core:     vice_x128
 cplus4:
-  emulator: vice
-  core:     xplus4
-
+  emulator: libretro
+  core:     vice_xplus4
+pet:
+  emulator: libretro
+  core:     vice_xpet
+atari2600:
+  emulator: libretro
+  core:     stella2014
+fbneo:
+  emulator: fba2x
+  core:     fba2x
+neogeo:
+  emulator: fba2x
+  core:     fba2x
+scummvm:
+  emulator: libretro
+  core:     scummvm

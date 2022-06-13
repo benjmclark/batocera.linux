@@ -1,16 +1,17 @@
 ################################################################################
 #
-# PCSX2
+# pcsx2
 #
 ################################################################################
-
-PCSX2_VERSION = 286b6448be332458c79f299736bb196ccc653659
+#Version: Commits on Jun 8, 2022
+PCSX2_VERSION = v1.7.2916
 PCSX2_SITE = https://github.com/pcsx2/pcsx2.git
-PCSX2_LICENSE = GPLv2 GPLv3 LGPLv2.1 LGPLv3
-PCSX2_DEPENDENCIES = xserver_xorg-server alsa-lib freetype zlib libpng wxwidgets libaio portaudio libsoundtouch sdl2 libpcap yaml-cpp libgtk3 libsamplerate fmt
-
 PCSX2_SITE_METHOD = git
 PCSX2_GIT_SUBMODULES = YES
+PCSX2_SUPPORTS_IN_SOURCE_BUILD = NO
+PCSX2_LICENSE = GPLv3
+PCSX2_LICENSE_FILE = COPYING.GPLv3
+PCSX2_DEPENDENCIES = xserver_xorg-server alsa-lib freetype zlib libpng wxwidgets libaio portaudio libsoundtouch sdl2 libpcap yaml-cpp libgtk3 libsamplerate fmt
 
 PCSX2_CONF_OPTS += -DCMAKE_BUILD_TYPE=Release
 PCSX2_CONF_OPTS += -DXDG_STD=TRUE
@@ -20,22 +21,26 @@ PCSX2_CONF_OPTS += -DPACKAGE_MODE=FALSE
 PCSX2_CONF_OPTS += -DwxWidgets_CONFIG_EXECUTABLE="$(STAGING_DIR)/usr/bin/wx-config"
 PCSX2_CONF_OPTS += -DPCSX2_TARGET_ARCHITECTURES=x86_64
 PCSX2_CONF_OPTS += -DENABLE_TESTS=OFF
-PCSX2_CONF_OPTS += -DUSE_SYSTEM_YAML=ON
 PCSX2_CONF_OPTS += -DEXTRA_PLUGINS=TRUE
-#PCSX2_CONF_OPTS += -DwxUSE_UNICODE=0
-#PCSX2_CONF_OPTS += -DwxUSE_UNICODE_UTF8=0
+PCSX2_CONF_OPTS += -DQT_BUILD=FALSE
 PCSX2_CONF_OPTS += -DBUILD_SHARED_LIBS=ON
+# auto will use system libraries & fallback to 3rd party
+PCSX2_CONF_OPTS += -DUSE_SYSTEM_LIBS=AUTO
 PCSX2_CONF_OPTS += -DDISABLE_ADVANCE_SIMD=ON
 PCSX2_CONF_OPTS += -DUSE_VTUNE=OFF
-
-# https://github.com/PCSX2/pcsx2/blob/51ceec74a351bd25a1066ec2c02c2aa3f8c813f4/cmake/BuildParameters.cmake#L215
-# PCSX2_CONF_OPTS += -DARCH_FLAG="-msse -msse2 -mfxsr -mxsave -march=x86_64"
+PCSX2_CONF_OPTS += -DUSE_VULKAN=ON
+PCSX2_CONF_OPTS += -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE
 
 define PCSX2_INSTALL_TARGET_CMDS
-	$(INSTALL) -m 0755 -D $(@D)/pcsx2/PCSX2 $(TARGET_DIR)/usr/PCSX/bin/PCSX2
-	cp -pr $(@D)/bin/Langs      $(TARGET_DIR)/usr/PCSX/bin
-        mkdir -p $(TARGET_DIR)/usr/PCSX/bin/plugins
-	cp -pr $(@D)/plugins/*/*.so $(TARGET_DIR)/usr/PCSX/bin/plugins
+	$(INSTALL) -m 0755 -D $(@D)/buildroot-build/pcsx2/pcsx2 $(TARGET_DIR)/usr/pcsx2/bin/pcsx2
+	cp -pr  $(@D)/bin/resources $(TARGET_DIR)/usr/pcsx2/bin/
+	mkdir -p $(TARGET_DIR)/usr/pcsx2/lib
+	cp -p $(@D)/buildroot-build/common/libcommon.so $(TARGET_DIR)/usr/pcsx2/lib
+	cp -p $(@D)/buildroot-build/3rdparty/glad/libglad.so $(TARGET_DIR)/usr/pcsx2/lib
+	cp -p $(@D)/buildroot-build/3rdparty/imgui/libimgui.so $(TARGET_DIR)/usr/pcsx2/lib
+	cp -p $(@D)/buildroot-build/3rdparty/rapidyaml/rapidyaml/libryml.so.0.4.1 $(TARGET_DIR)/usr/pcsx2/lib
+	cp -p $(@D)/buildroot-build/3rdparty/glslang/libglslang.so $(TARGET_DIR)/usr/pcsx2/lib
+	cp -p $(@D)/buildroot-build/3rdparty/zstd/libpcsx2-zstd.so $(TARGET_DIR)/usr/pcsx2/lib
 endef
 
 define PCSX2_EVMAPY

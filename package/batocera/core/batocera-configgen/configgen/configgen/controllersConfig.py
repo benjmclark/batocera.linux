@@ -1,8 +1,10 @@
 #!/usr/bin/env python
+
 import xml.etree.ElementTree as ET
 import batoceraFiles
 
-esInputs = batoceraFiles.esInputs
+from utils.logger import get_logger
+eslog = get_logger(__name__)
 
 """Default mapping of Batocera keys to SDL_GAMECONTROLLERCONFIG keys."""
 _DEFAULT_SDL_MAPPING = {
@@ -50,7 +52,7 @@ class Controller:
 # Load all controllers from the es_input.cfg
 def loadAllControllersConfig():
     controllers = dict()
-    tree = ET.parse(esInputs)
+    tree = ET.parse(batoceraFiles.esInputs)
     root = tree.getroot()
     for controller in root.findall(".//inputConfig"):
         controllerInstance = Controller(controller.get("deviceName"), controller.get("type"),
@@ -66,7 +68,7 @@ def loadAllControllersConfig():
 # Load all controllers from the es_input.cfg
 def loadAllControllersByNameConfig():
     controllers = dict()
-    tree = ET.parse(esInputs)
+    tree = ET.parse(batoceraFiles.esInputs)
     root = tree.getroot()
     for controller in root.findall(".//inputConfig"):
         controllerInstance = Controller(controller.get("deviceName"), controller.get("type"),
@@ -114,7 +116,7 @@ def _generateSdlGameControllerConfig(controller, sdlMapping=_DEFAULT_SDL_MAPPING
     """Returns an SDL_GAMECONTROLLERCONFIG-formatted string for the given configuration."""
     config = []
     config.append(controller.guid)
-    config.append(controller.configName)
+    config.append(controller.realName)
     config.append("platform:Linux")
 
     def add_mapping(input):
@@ -164,23 +166,28 @@ def _keyToSdlGameControllerConfig(keyname, name, type, id, value=None):
         'leftshoulder:b6'
 
       _keyToSdlGameControllerConfig('dpleft', 'left', 'hat', 0, 8)
-        'dpleft:h0.9'
+        'dpleft:h0.8'
 
       _keyToSdlGameControllerConfig('lefty', 'joystick1up', 'axis', 1, -1)
         'lefty:a1'
 
       _keyToSdlGameControllerConfig('lefty', 'joystick1up', 'axis', 1, 1)
-        'lefty:a1'
+        'lefty:a1~'
+
+      _keyToSdlGameControllerConfig('dpup', 'up', 'axis', 1, -1)
+        'dpup:-a1'
     """
     if type == 'button':
-        return '{}:b{}'.format(keyname, id)
+        return f'{keyname}:b{id}'
     elif type == 'hat':
-        return '{}:h{}.{}'.format(keyname, id, value)
+        return f'{keyname}:h{id}.{value}'
     elif type == 'axis':
         if 'joystick' in name:
             return '{}:a{}{}'.format(keyname, id, '~' if int(value) > 0 else '')
+        elif keyname in ('dpup', 'dpdown', 'dpleft', 'dpright'):
+            return '{}:{}a{}'.format(keyname, '-' if int(value) < 0 else '+', id)
         else:
-            return '{}:a{}'.format(keyname, id)
+            return f'{keyname}:a{id}'
     elif type == 'key':
         return None
     else:
@@ -206,3 +213,46 @@ def generateSdlGameControllerPadsOrderConfig(controllers):
             res = res + ";"
         res = res + str(controller.index)
     return res
+
+def gunsNeedCrosses(guns):
+    for gun in guns:
+        if guns[gun]["need_cross"]:
+            return True
+    return False
+
+def getGuns():
+    import pyudev
+    import re
+
+    guns = {}
+    context = pyudev.Context()
+
+    # guns are mouses, just filter on them
+    mouses = context.list_devices(subsystem='input')
+
+    # keep only mouses with /dev/iput/eventxx
+    mouses_clean = {}
+    for mouse in mouses:
+        matches = re.match(r"^/dev/input/event([0-9]*)$", str(mouse.device_node))
+        if matches != None:
+            if ("ID_INPUT_MOUSE" in mouse.properties and mouse.properties["ID_INPUT_MOUSE"]) == '1':
+                mouses_clean[int(matches.group(1))] = mouse
+    mouses = mouses_clean
+
+    nmouse = 0
+    ngun   = 0
+    for eventid in sorted(mouses):
+        eslog.info("found mouse {} at {} with id_mouse={}".format(nmouse, mouses[eventid].device_node, nmouse))
+        if "ID_INPUT_GUN" not in mouses[eventid].properties or mouses[eventid].properties["ID_INPUT_GUN"] != "1":
+            nmouse = nmouse + 1
+            continue
+        # retroarch uses mouse indexes into configuration files using ID_INPUT_MOUSE (TOUCHPAD are listed after mouses)
+        need_cross = "ID_INPUT_GUN_NEED_CROSS" in mouses[eventid].properties and mouses[eventid].properties["ID_INPUT_GUN_NEED_CROSS"] == '1'
+        guns[ngun] = {"node": mouses[eventid].device_node, "id_mouse": nmouse, "need_cross": need_cross}
+        eslog.info("found gun {} at {} with id_mouse={}".format(ngun, mouses[eventid].device_node, nmouse))
+        nmouse = nmouse + 1
+        ngun = ngun + 1
+
+    if len(guns) == 0:
+        eslog.info("no gun found")
+    return guns

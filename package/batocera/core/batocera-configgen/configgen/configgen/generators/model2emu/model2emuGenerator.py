@@ -15,7 +15,7 @@ eslog = get_logger(__name__)
 
 class Model2EmuGenerator(Generator):
 
-    def generate(self, system, rom, playersControllers, gameResolution):
+    def generate(self, system, rom, playersControllers, guns, gameResolution):
         wineprefix = batoceraFiles.SAVES + "/model2"
         emupath = wineprefix + "/model2emu"
 
@@ -30,10 +30,10 @@ class Model2EmuGenerator(Generator):
         # install windows libraries required
         if not os.path.exists(wineprefix + "/d3dcompiler_42.done"):
             cmd = ["/usr/wine/winetricks", "d3dcompiler_42"]
-            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/lutris/lib/wine", "WINEPREFIX": wineprefix }
+            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/proton/lib/wine", "WINEPREFIX": wineprefix }
             env.update(os.environ)
-            env["PATH"] = "/usr/wine/lutris/bin:/bin:/usr/bin"
-            eslog.debug("command: {}".format(str(cmd)))
+            env["PATH"] = "/usr/wine/proton/bin:/bin:/usr/bin"
+            eslog.debug(f"command: {str(cmd)}")
             proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
             exitcode = proc.returncode
@@ -44,10 +44,10 @@ class Model2EmuGenerator(Generator):
 
         if not os.path.exists(wineprefix + "/d3dx9_42.done"):
             cmd = ["/usr/wine/winetricks", "d3dx9_42"]
-            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/lutris/lib/wine", "WINEPREFIX": wineprefix }
+            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/proton/lib/wine", "WINEPREFIX": wineprefix }
             env.update(os.environ)
-            env["PATH"] = "/usr/wine/lutris/bin:/bin:/usr/bin"
-            eslog.debug("command: {}".format(str(cmd)))
+            env["PATH"] = "/usr/wine/proton/bin:/bin:/usr/bin"
+            eslog.debug(f"command: {str(cmd)}")
             proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
             exitcode = proc.returncode
@@ -58,10 +58,10 @@ class Model2EmuGenerator(Generator):
 
         if not os.path.exists(wineprefix + "/d3dcompiler_43.done"):
             cmd = ["/usr/wine/winetricks", "d3dcompiler_43"]
-            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/lutris/lib/wine", "WINEPREFIX": wineprefix }
+            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/proton/lib/wine", "WINEPREFIX": wineprefix }
             env.update(os.environ)
-            env["PATH"] = "/usr/wine/lutris/bin:/bin:/usr/bin"
-            eslog.debug("command: {}".format(str(cmd)))
+            env["PATH"] = "/usr/wine/proton/bin:/bin:/usr/bin"
+            eslog.debug(f"command: {str(cmd)}")
             proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
             exitcode = proc.returncode
@@ -72,10 +72,10 @@ class Model2EmuGenerator(Generator):
 
         if not os.path.exists(wineprefix + "/d3dx9_43.done"):
             cmd = ["/usr/wine/winetricks", "d3dx9_43"]
-            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/lutris/lib/wine", "WINEPREFIX": wineprefix }
+            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/proton/lib/wine", "WINEPREFIX": wineprefix }
             env.update(os.environ)
-            env["PATH"] = "/usr/wine/lutris/bin:/bin:/usr/bin"
-            eslog.debug("command: {}".format(str(cmd)))
+            env["PATH"] = "/usr/wine/proton/bin:/bin:/usr/bin"
+            eslog.debug(f"command: {str(cmd)}")
             proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
             exitcode = proc.returncode
@@ -86,10 +86,10 @@ class Model2EmuGenerator(Generator):
     
         if not os.path.exists(wineprefix + "/d3dx9.done"):
             cmd = ["/usr/wine/winetricks", "d3dx9"]
-            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/lutris/lib/wine", "WINEPREFIX": wineprefix }
+            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/proton/lib/wine", "WINEPREFIX": wineprefix }
             env.update(os.environ)
-            env["PATH"] = "/usr/wine/lutris/bin:/bin:/usr/bin"
-            eslog.debug("command: {}".format(str(cmd)))
+            env["PATH"] = "/usr/wine/proton/bin:/bin:/usr/bin"
+            eslog.debug(f"command: {str(cmd)}")
             proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
             exitcode = proc.returncode
@@ -100,10 +100,10 @@ class Model2EmuGenerator(Generator):
 
         if not os.path.exists(wineprefix + "/xact.done"):
             cmd = ["/usr/wine/winetricks", "xact"]
-            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/lutris/lib/wine", "WINEPREFIX": wineprefix }
+            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/proton/lib/wine", "WINEPREFIX": wineprefix }
             env.update(os.environ)
-            env["PATH"] = "/usr/wine/lutris/bin:/bin:/usr/bin"
-            eslog.debug("command: {}".format(str(cmd)))
+            env["PATH"] = "/usr/wine/proton/bin:/bin:/usr/bin"
+            eslog.debug(f"command: {str(cmd)}")
             proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
             exitcode = proc.returncode
@@ -114,10 +114,10 @@ class Model2EmuGenerator(Generator):
 
         if not os.path.exists(wineprefix + "/xact_x64.done"):
             cmd = ["/usr/wine/winetricks", "xact_x64"]
-            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/lutris/lib/wine", "WINEPREFIX": wineprefix }
+            env = {"LD_LIBRARY_PATH": "/lib32:/usr/wine/proton/lib/wine", "WINEPREFIX": wineprefix }
             env.update(os.environ)
-            env["PATH"] = "/usr/wine/lutris/bin:/bin:/usr/bin"
-            eslog.debug("command: {}".format(str(cmd)))
+            env["PATH"] = "/usr/wine/proton/bin:/bin:/usr/bin"
+            eslog.debug(f"command: {str(cmd)}")
             proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
             exitcode = proc.returncode
@@ -137,17 +137,13 @@ class Model2EmuGenerator(Generator):
         if os.path.isfile(configFileName):
             Config.read(configFileName)
 
+        # set ini to use custom resolution and automatically start in fullscreen
         Config.set("Renderer","FullScreenWidth", str(gameResolution["width"]))
         Config.set("Renderer","FullScreenHeight", str(gameResolution["height"]))
-        # set ini to use custom resolution and automatically start in fullscreen
         Config.set("Renderer","FullMode", "4")
         Config.set("Renderer","AutoFull", "1")
 
         # now set the emulator features
-        if system.isOptSet("screenRatio"):
-            Config.set("Renderer","WideScreenWindow", format(system.config["screenRatio"]))
-        else:
-            Config.set("Renderer","WideScreenWindow", "0")
         if system.isOptSet("fakeGouraud"):
             Config.set("Renderer","FakeGouraud", format(system.config["fakeGouraud"]))
         else:
@@ -189,7 +185,7 @@ class Model2EmuGenerator(Generator):
             Config.write(configfile)
         
         # now run the emulator
-        commandArray = ["/usr/wine/lutris/bin/wine", "explorer", "/desktop=Wine,{}x{}".format(gameResolution["width"], gameResolution["height"]), "/userdata/saves/model2/model2emu/emulator_multicpu.exe"]
+        commandArray = ["/usr/wine/proton/bin/wine", "/userdata/saves/model2/model2emu/emulator_multicpu.exe"]
         # simplify the rom name (strip the directory & extension)
         romname = rom.replace("/userdata/roms/model2/", "")
         smplromname = romname.replace(".zip", "")
@@ -199,7 +195,7 @@ class Model2EmuGenerator(Generator):
             array=commandArray,
             env={
                 "WINEPREFIX": wineprefix,
-                "LD_LIBRARY_PATH": "/lib32:/usr/wine/lutris/lib/wine",
+                "LD_LIBRARY_PATH": "/lib32:/usr/wine/proton/lib/wine",
                 "LIBGL_DRIVERS_PATH": "/lib32/dri",
                 # hum pw 0.2 and 0.3 are hardcoded, not nice
                 "SPA_PLUGIN_DIR": "/usr/lib/spa-0.2:/lib32/spa-0.2",

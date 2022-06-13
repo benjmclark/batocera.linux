@@ -63,16 +63,21 @@ def createXemuConfig(iniConfig, system, rom, playersControllers):
         iniConfig.set("display", "scale", system.config["scaling"])
     else:
         iniConfig.set("display", "scale", "scale") #4:3
-    iniConfig.set("display", "ui_scale", "1")
+
+    if system.isOptSet("render"):
+        iniConfig.set("display", "render_scale", system.config["render"])
+    else:
+        iniConfig.set("display", "render_scale", "1") #render scale by default
+        iniConfig.set("display", "ui_scale", "1")
 
     # Fill input section
     # first, clear
     for i in range(1,5):
-        iniConfig.set("input", "controller_{}_guid".format(i), "")
+        iniConfig.set("input", f"controller_{i}_guid", "")
     nplayer = 1
     for playercontroller, pad in sorted(playersControllers.items()):
         if nplayer <= 4:
-            iniConfig.set("input", "controller_{}_guid".format(nplayer), pad.guid)
+            iniConfig.set("input", f"controller_{nplayer}_guid", pad.guid)
         nplayer = nplayer + 1
 
     # Fill network section

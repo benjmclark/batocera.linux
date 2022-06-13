@@ -1,11 +1,16 @@
+default:
+  options:
+    hud_support: true
+
 nds:
   emulator: drastic
   core:     drastic
-psp:
-  options:
-    frameskip: automatic
-psx:
+flash:
+  emulator: lightspark
+  core:     lightspark
+fmtowns:
   emulator: libretro
-  core:     duckstation
+  core:     mess
+psx:
   options:
-    gpu_software: true
+    gfxbackend: vulkan

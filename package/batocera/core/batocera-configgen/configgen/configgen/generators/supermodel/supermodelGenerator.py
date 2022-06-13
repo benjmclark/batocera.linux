@@ -11,7 +11,7 @@ from shutil import copyfile
 
 class SupermodelGenerator(Generator):
 
-    def generate(self, system, rom, playersControllers, gameResolution):
+    def generate(self, system, rom, playersControllers, guns, gameResolution):
         commandArray = ["supermodel", "-fullscreen"]
         
         # legacy3d
@@ -146,9 +146,15 @@ def configPadsIni(playersControllers, altControl):
         targetConfig.write(configfile)
 
 def transformValue(value, playersControllers, mapping, mapping_fallback):
-    if value[0] == '"' and value[-1] == '"':
+    # remove comments
+    cleanValue = value
+    matches = re.search("^([^;]*[^ ])[ ]*;.*$", value)
+    if matches:
+        cleanValue = matches.group(1)
+
+    if cleanValue[0] == '"' and cleanValue[-1] == '"':
         newvalue = ""
-        for elt in value[1:-1].split(","):
+        for elt in cleanValue[1:-1].split(","):
             newelt = transformElement(elt, playersControllers, mapping, mapping_fallback)
             if newelt is not None:
                 if newvalue != "":
@@ -157,7 +163,7 @@ def transformValue(value, playersControllers, mapping, mapping_fallback):
         return '"' + newvalue + '"'
     else:
         # integers
-        return value
+        return cleanValue
 
 def transformElement(elt, playersControllers, mapping, mapping_fallback):
     # Docs/README.txt
@@ -216,16 +222,16 @@ def input2input(playersControllers, player, joynum, button, axisside = None):
         if button in pad.inputs:
             input = pad.inputs[button]
             if input.type == "button":
-                return "JOY{}_BUTTON{}".format(joynum+1, int(input.id)+1)
+                return f"JOY{joynum+1}_BUTTON{int(input.id)+1}"
             elif input.type == "hat":
                 if input.value == "1":
-                    return "JOY{}_UP".format(joynum+1)
+                    return f"JOY{joynum+1}_UP"
                 elif input.value == "2":
-                    return "JOY{}_RIGHT".format(joynum+1)
+                    return f"JOY{joynum+1}_RIGHT"
                 elif input.value == "4":
-                    return "JOY{}_DOWN".format(joynum+1)
+                    return f"JOY{joynum+1}_DOWN"
                 elif input.value == "8":
-                    return "JOY{}_LEFT".format(joynum+1)
+                    return f"JOY{joynum+1}_LEFT"
             elif input.type == "axis":
                 sidestr = ""
                 if axisside is not None:
@@ -241,16 +247,16 @@ def input2input(playersControllers, player, joynum, button, axisside = None):
                             sidestr = "_NEG"
 
                 if button == "joystick1left" or button == "left":
-                    return "JOY{}_XAXIS{}".format(joynum+1, sidestr)
+                    return f"JOY{joynum+1}_XAXIS{sidestr}"
                 elif button == "joystick1up" or button == "up":
-                    return "JOY{}_YAXIS{}".format(joynum+1, sidestr)
+                    return f"JOY{joynum+1}_YAXIS{sidestr}"
                 elif button == "joystick2left":
-                    return "JOY{}_RXAXIS{}".format(joynum+1, sidestr)
+                    return f"JOY{joynum+1}_RXAXIS{sidestr}"
                 elif button == "joystick2up":
-                    return "JOY{}_RYAXIS{}".format(joynum+1, sidestr)
+                    return f"JOY{joynum+1}_RYAXIS{sidestr}"
                 elif button == "l2":
-                    return "JOY{}_ZAXIS{}".format(joynum+1, sidestr)
+                    return f"JOY{joynum+1}_ZAXIS{sidestr}"
                 elif button == "r2":
-                    return "JOY{}_RZAXIS{}".format(joynum+1, sidestr)
+                    return f"JOY{joynum+1}_RZAXIS{sidestr}"
 
     return None

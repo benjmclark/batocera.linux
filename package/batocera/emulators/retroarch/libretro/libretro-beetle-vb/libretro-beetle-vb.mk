@@ -1,17 +1,27 @@
 ################################################################################
 #
-# BEETLE_VB
+# libretro-beetle-vb
 #
 ################################################################################
-# Commits on Sep 11, 2021
-LIBRETRO_BEETLE_VB_VERSION = 12058638daebe60f977b6c9fe711d9b73bcf85be
+# Version.: Commits on Apr 9, 2022
+LIBRETRO_BEETLE_VB_VERSION = 246555f8ed7e0b9e5748b2ee2ed6743187c61393
 LIBRETRO_BEETLE_VB_SITE = $(call github,libretro,beetle-vb-libretro,$(LIBRETRO_BEETLE_VB_VERSION))
 LIBRETRO_BEETLE_VB_LICENSE = GPLv2
 
 LIBRETRO_BEETLE_VB_PLATFORM = $(LIBRETRO_PLATFORM)
 
-ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI3),y)
-LIBRETRO_BEETLE_VB_PLATFORM = rpi3_64
+ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI1),y)
+LIBRETRO_BEETLE_VB_PLATFORM = rpi1
+
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI2),y)
+LIBRETRO_BEETLE_VB_PLATFORM = rpi2
+
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI3)$(BR2_PACKAGE_BATOCERA_TARGET_RPIZERO2),y)
+    ifeq ($(BR2_arm),y)
+        LIBRETRO_BEETLE_VB_PLATFORM = rpi3
+    else
+        LIBRETRO_BEETLE_VB_PLATFORM = rpi3_64
+    endif
 
 else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI4),y)
 LIBRETRO_BEETLE_VB_PLATFORM = rpi4_64
@@ -21,7 +31,8 @@ LIBRETRO_BEETLE_VB_PLATFORM = unix
 endif
 
 define LIBRETRO_BEETLE_VB_BUILD_CMDS
-	$(TARGET_CONFIGURE_OPTS) $(MAKE) CXX="$(TARGET_CXX)" CC="$(TARGET_CC)" -C $(@D) platform="$(LIBRETRO_BEETLE_VB_PLATFORM)"
+	$(TARGET_CONFIGURE_OPTS) $(MAKE) CXX="$(TARGET_CXX)" CC="$(TARGET_CC)" -C $(@D) platform="$(LIBRETRO_BEETLE_VB_PLATFORM)" \
+        GIT_VERSION="-$(shell echo $(LIBRETRO_BEETLE_VB_VERSION) | cut -c 1-7)"
 endef
 
 define LIBRETRO_BEETLE_VB_INSTALL_TARGET_CMDS

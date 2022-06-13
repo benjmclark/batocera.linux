@@ -1,15 +1,26 @@
 default:
   options:
     video_threaded: true
-
-psp:
-  options:
-    frameskip: automatic
+    videomode: max-1280x720
+    hud_support: false
+amiga500:
+  emulator: libretro
+  core:     uae4arm
+amiga1200:
+  emulator: libretro
+  core:     uae4arm
+amigacd32:
+  emulator: libretro
+  core:     uae4arm
+amigacdtv:
+  emulator: libretro
+  core:     uae4arm
 nds:
   emulator: drastic
   core:     drastic
-psx:
+fmtowns:
   emulator: libretro
-  core:     duckstation
+  core:     mess
+psx:
   options:
-    gpu_software: true
+    gfxbackend: vulkan

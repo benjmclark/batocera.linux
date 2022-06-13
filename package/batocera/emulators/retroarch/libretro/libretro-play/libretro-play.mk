@@ -1,10 +1,10 @@
 ################################################################################
 #
-# PLAY
+# libretro-play
 #
 ################################################################################
 
-LIBRETRO_PLAY_VERSION = 67a826fed6d96c3acc0c5a3d1d75b05a12fb865d
+LIBRETRO_PLAY_VERSION = 0.51
 LIBRETRO_PLAY_SITE = https://github.com/jpd002/Play-.git
 LIBRETRO_PLAY_LICENSE = BSD
 LIBRETRO_PLAY_DEPENDENCIES = qt5base qt5x11extras xserver_xorg-server libglew
@@ -25,10 +25,6 @@ LIBRETRO_PLAY_CONF_OPTS += -DENABLE_AMAZON_S3=ON
 define LIBRETRO_PLAY_INSTALL_TARGET_CMDS
 	$(INSTALL) -D $(@D)/Source/ui_libretro/play_libretro.so \
 		$(TARGET_DIR)/usr/lib/libretro/play_libretro.so
-	$(INSTALL) -D $(@D)/Source/ui_libretro/Source/libchdr/libchdr.so \
-		$(TARGET_DIR)/usr/lib/libchdr.so
-	$(INSTALL) -D $(@D)/Source/ui_libretro/Source/libchdr/libchdr.so.0.1 \
-		$(TARGET_DIR)/usr/lib/libchdr.so.0.1
 	$(INSTALL) -D $(@D)/Source/ui_libretro/Source/CodeGen/libCodeGen.so \
 		$(TARGET_DIR)/usr/lib/libCodeGen.so
 	$(INSTALL) -D $(@D)/Source/ui_libretro/Source/Framework/libFramework.so \

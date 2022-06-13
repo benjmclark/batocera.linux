@@ -8,11 +8,10 @@ import os
 from os import environ
 import configparser
 
-
 class CitraGenerator(Generator):
 
     # Main entry of the module
-    def generate(self, system, rom, playersControllers, gameResolution):
+    def generate(self, system, rom, playersControllers, guns, gameResolution):
         CitraGenerator.writeCITRAConfig(batoceraFiles.CONF + "/citra-emu/qt-config.ini", system, playersControllers)
 
         commandArray = ['/usr/bin/citra-qt', rom]
@@ -60,11 +59,9 @@ class CitraGenerator(Generator):
             os.remove(citraConfigFile)          # Force removing qt-config.ini
             citraConfig.read(citraConfigFile)
 
-
         ## [LAYOUT]
         if not citraConfig.has_section("Layout"):
             citraConfig.add_section("Layout")
-
         # Screen Layout
         citraConfig.set("Layout", "custom_layout", "0")
         if system.isOptSet('citra_screen_layout'):
@@ -75,11 +72,9 @@ class CitraGenerator(Generator):
             citraConfig.set("Layout", "swap_screen",   "false")
             citraConfig.set("Layout", "layout_option", "4")
 
-
         ## [SYSTEM]
         if not citraConfig.has_section("System"):
             citraConfig.add_section("System")
-
         # New 3DS Version
         if system.isOptSet('citra_is_new_3ds') and system.config["citra_is_new_3ds"] == '1':
             citraConfig.set("System", "is_new_3ds", "true")
@@ -88,34 +83,35 @@ class CitraGenerator(Generator):
         # Language
         citraConfig.set("System", "region_value", str(getCitraLangFromEnvironment()))
 
-
         ## [UI]
         if not citraConfig.has_section("UI"):
-            citraConfig.add_section("UI")
-        
+            citraConfig.add_section("UI")       
         # Start Fullscreen
         if system.isOptSet("showFPS") and system.getOptBoolean("showFPS"):
             citraConfig.set("UI", "fullscreen",       "false")
             citraConfig.set("UI", "showStatusBar",    "true")
         else:
             citraConfig.set("UI", "fullscreen",       "true")
+        # Batocera - Defaults
         citraConfig.set("UI", "displayTitleBars", "false")
         citraConfig.set("UI", "displaytitlebars", "false") # Emulator Bug
         citraConfig.set("UI", "firstStart",       "false")
+        citraConfig.set("UI", "hideInactiveMouse", "true")
+        citraConfig.set("UI", "enable_discord_presence", "false")
+        citraConfig.set("UI", "firstStart", "false")
+        # Remove pop-up prompt on start
+        citraConfig.set("UI", "calloutFlags", "1")
         # Close without confirmation
         citraConfig.set("UI", "confirmClose",     "false")
         citraConfig.set("UI", "confirmclose",     "false") # Emulator Bug
 
-
         ## [RENDERER]
         if not citraConfig.has_section("Renderer"):
             citraConfig.add_section("Renderer")
-
         # Force Hardware Rrendering / Shader or nothing works fine
         citraConfig.set("Renderer", "use_hw_renderer", "true")
         citraConfig.set("Renderer", "use_hw_shader",   "true")
         citraConfig.set("Renderer", "use_shader_jit",  "true")
-
         # Use VSYNC
         if system.isOptSet('citra_use_vsync_new') and system.config["citra_use_vsync_new"] == '0':
             citraConfig.set("Renderer", "use_vsync_new", "false")
@@ -131,12 +127,15 @@ class CitraGenerator(Generator):
             citraConfig.set("Renderer", "use_frame_limit", "false")
         else:
             citraConfig.set("Renderer", "use_frame_limit", "true")
-
+        
+        ## [WEB SERVICE]
+        if not citraConfig.has_section("WebService"):
+            citraConfig.add_section("WebService")
+        citraConfig.set("WebService", "enable_telemetry",  "false")
 
         ## [UTILITY]
         if not citraConfig.has_section("Utility"):
             citraConfig.add_section("Utility")
-
         # Disk Shader Cache
         if system.isOptSet('citra_use_disk_shader_cache') and system.config["citra_use_disk_shader_cache"] == '1':
             citraConfig.set("Utility", "use_disk_shader_cache", "true")
@@ -153,7 +152,6 @@ class CitraGenerator(Generator):
         else:
             citraConfig.set("Utility", "custom_textures",  "false")
             citraConfig.set("Utility", "preload_textures", "false")
-
 
         ## [CONTROLS]
         if not citraConfig.has_section("Controls"):
@@ -173,9 +171,9 @@ class CitraGenerator(Generator):
             if controller.player != "1":
                 continue
             for x in citraButtons:
-                citraConfig.set("Controls", "profiles\\1\\" + x, '"{}"'.format(CitraGenerator.setButton(citraButtons[x], controller.guid, controller.inputs)))
+                citraConfig.set("Controls", "profiles\\1\\" + x, f'"{CitraGenerator.setButton(citraButtons[x], controller.guid, controller.inputs)}"')
             for x in citraAxis:
-                citraConfig.set("Controls", "profiles\\1\\" + x, '"{}"'.format(CitraGenerator.setAxis(citraAxis[x], controller.guid, controller.inputs)))
+                citraConfig.set("Controls", "profiles\\1\\" + x, f'"{CitraGenerator.setAxis(citraAxis[x], controller.guid, controller.inputs)}"')
             break
 
         ## Update the configuration file
@@ -226,7 +224,6 @@ class CitraGenerator(Generator):
         if int(value) == 8:
             return "left"
         return "unknown"
-
 
 # Lauguage auto setting
 def getCitraLangFromEnvironment():

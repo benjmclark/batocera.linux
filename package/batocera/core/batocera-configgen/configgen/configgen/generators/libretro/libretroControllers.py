@@ -27,7 +27,7 @@ systemToSwapDisable = {'amigacd32', 'amigacdtv', 'naomi', 'atomiswave', 'megadri
 
 # Write a configuration for a specified controller
 # Warning, function used by amiberry because it reads the same retroarch formatting
-def writeControllersConfig(retroconfig, system, controllers):
+def writeControllersConfig(retroconfig, system, controllers, lightgun):
     # Map buttons to the corresponding retroarch specials keys
     retroarchspecials = {'x': 'load_state', 'y': 'save_state', 'a': 'reset', 'start': 'exit_emulator', \
                          'up': 'state_slot_increase', 'down': 'state_slot_decrease', 'left': 'rewind', 'right': 'hold_fast_forward', \
@@ -55,14 +55,14 @@ def writeControllersConfig(retroconfig, system, controllers):
         del retroarchspecials['b']
 
     for controller in controllers:
-        writeControllerConfig(retroconfig, controllers[controller], controller, system, retroarchspecials)
+        writeControllerConfig(retroconfig, controllers[controller], controller, system, retroarchspecials, lightgun)
     writeHotKeyConfig(retroconfig, controllers)
 
 # Remove all controller configurations
 def cleanControllerConfig(retroconfig, controllers, retroarchspecials):
     retroconfig.disableAll('input_player')
     for specialkey in retroarchspecials:
-        retroconfig.disableAll('input_{}'.format(retroarchspecials[specialkey]))
+        retroconfig.disableAll(f'input_{retroarchspecials[specialkey]}')
 
 
 # Write the hotkey for player 1
@@ -73,17 +73,17 @@ def writeHotKeyConfig(retroconfig, controllers):
 
 
 # Write a configuration for a specified controller
-def writeControllerConfig(retroconfig, controller, playerIndex, system, retroarchspecials):
-    generatedConfig = generateControllerConfig(controller, retroarchspecials, system)
+def writeControllerConfig(retroconfig, controller, playerIndex, system, retroarchspecials, lightgun):
+    generatedConfig = generateControllerConfig(controller, retroarchspecials, system, lightgun)
     for key in generatedConfig:
         retroconfig.save(key, generatedConfig[key])
 
-    retroconfig.save('input_player{}_joypad_index'.format(playerIndex), controller.index)
-    retroconfig.save('input_player{}_analog_dpad_mode'.format(playerIndex), getAnalogMode(controller, system))
+    retroconfig.save(f'input_player{playerIndex}_joypad_index', controller.index)
+    retroconfig.save(f'input_player{playerIndex}_analog_dpad_mode', getAnalogMode(controller, system))
 
 
 # Create a configuration for a given controller
-def generateControllerConfig(controller, retroarchspecials, system):
+def generateControllerConfig(controller, retroarchspecials, system, lightgun):
 # Map an emulationstation button name to the corresponding retroarch name
     retroarchbtns = {'a': 'a', 'b': 'b', 'x': 'x', 'y': 'y', \
                      'pageup': 'l', 'pagedown': 'r', 'l2': 'l2', 'r2': 'r2', \
@@ -106,23 +106,25 @@ def generateControllerConfig(controller, retroarchspecials, system):
         btnvalue = retroarchbtns[btnkey]
         if btnkey in controller.inputs:
             input = controller.inputs[btnkey]
-            config['input_player%s_%s_%s' % (controller.player, btnvalue, typetoname[input.type])] = getConfigValue(
+            config['input_player{}_{}_{}'.format(controller.player, btnvalue, typetoname[input.type])] = getConfigValue(
                 input)
-    for btnkey in retroarchGunbtns: # Gun Mapping
-        btnvalue = retroarchGunbtns[btnkey]
-        if btnkey in controller.inputs:
-            input = controller.inputs[btnkey]
-            config['input_player%s_gun_%s_%s' % (controller.player, btnvalue, typetoname[input.type])] = getConfigValue(
-                input)
+    if lightgun:
+        for btnkey in retroarchGunbtns: # Gun Mapping
+            btnvalue = retroarchGunbtns[btnkey]
+            if btnkey in controller.inputs:
+                input = controller.inputs[btnkey]
+                config['input_player{}_gun_{}_{}'.format(controller.player, btnvalue, typetoname[input.type])] = getConfigValue(
+                    input)
     for dirkey in retroarchdirs:
         dirvalue = retroarchdirs[dirkey]
         if dirkey in controller.inputs:
             input = controller.inputs[dirkey]
-            config['input_player%s_%s_%s' % (controller.player, dirvalue, typetoname[input.type])] = getConfigValue(
+            config['input_player{}_{}_{}'.format(controller.player, dirvalue, typetoname[input.type])] = getConfigValue(
                 input)
-            # Gun Mapping
-            config['input_player%s_gun_dpad_%s_%s' % (controller.player, dirvalue, typetoname[input.type])] = getConfigValue(
-                input)
+            if lightgun:
+                # Gun Mapping
+                config['input_player{}_gun_dpad_{}_{}'.format(controller.player, dirvalue, typetoname[input.type])] = getConfigValue(
+                    input)
     for jskey in retroarchjoysticks:
         jsvalue = retroarchjoysticks[jskey]
         if jskey in controller.inputs:
@@ -139,10 +141,10 @@ def generateControllerConfig(controller, retroarchspecials, system):
             specialvalue = specialMap[specialkey]
             if specialkey in controller.inputs:
                 input = controller.inputs[specialkey]
-                config['input_%s_%s' % (specialvalue, typetoname[input.type])] = getConfigValue(input)
+                config['input_{}_{}'.format(specialvalue, typetoname[input.type])] = getConfigValue(input)
         specialvalue = retroarchspecials['start']
         input = controller.inputs['start']
-        config['input_%s_%s' % (specialvalue, typetoname[input.type])] = getConfigValue(input)
+        config['input_{}_{}'.format(specialvalue, typetoname[input.type])] = getConfigValue(input)
     return config
 
 

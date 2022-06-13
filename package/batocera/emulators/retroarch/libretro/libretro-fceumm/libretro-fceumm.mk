@@ -1,31 +1,41 @@
 ################################################################################
 #
-# FCEUMM
+# libretro-fceumm
 #
 ################################################################################
-# Last commit: July 30, 2021
-LIBRETRO_FCEUMM_VERSION = afe2b4d9650d9e468b20636a3eab6bac2b8f9844
+# Version: Commits on Apr 7, 2022
+LIBRETRO_FCEUMM_VERSION = b3c35b6515b2b6a789c589f976a4a323ebebe3eb
 LIBRETRO_FCEUMM_SITE = $(call github,libretro,libretro-fceumm,$(LIBRETRO_FCEUMM_VERSION))
 LIBRETRO_FCEUMM_LICENSE = GPLv2
 
 LIBRETRO_FCEUMM_PLATFORM = $(LIBRETRO_PLATFORM)
 
-ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI3),y)
-LIBRETRO_FCEUMM_PLATFORM = rpi3_64
+ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI1),y)
+LIBRETRO_FCEUMM_PLATFORM = rpi1
+
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI2),y)
+LIBRETRO_FCEUMM_PLATFORM = rpi2
+
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI3)$(BR2_PACKAGE_BATOCERA_TARGET_RPIZERO2),y)
+    ifeq ($(BR2_arm),y)
+        LIBRETRO_FCEUMM_PLATFORM = rpi3
+    else
+        LIBRETRO_FCEUMM_PLATFORM = rpi3_64
+    endif
 
 else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI4),y)
 LIBRETRO_FCEUMM_PLATFORM = rpi4
 
 else ifeq ($(BR2_aarch64),y)
 LIBRETRO_FCEUMM_PLATFORM = unix
-endif
 
-ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_S812),y)
-	LIBRETRO_FCEUMM_PLATFORM = armv
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_S812),y)
+LIBRETRO_FCEUMM_PLATFORM = armv
 endif
 
 define LIBRETRO_FCEUMM_BUILD_CMDS
-	$(TARGET_CONFIGURE_OPTS) $(MAKE) CXX="$(TARGET_CXX)" CC="$(TARGET_CC)" -C $(@D) -f Makefile.libretro platform="$(LIBRETRO_FCEUMM_PLATFORM)"
+	$(TARGET_CONFIGURE_OPTS) $(MAKE) CXX="$(TARGET_CXX)" CC="$(TARGET_CC)" -C $(@D) -f Makefile.libretro platform="$(LIBRETRO_FCEUMM_PLATFORM)" \
+        GIT_VERSION="-$(shell echo $(LIBRETRO_FCEUMM_VERSION) | cut -c 1-7)"
 endef
 
 define LIBRETRO_FCEUMM_INSTALL_TARGET_CMDS

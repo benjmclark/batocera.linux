@@ -16,39 +16,36 @@ eslog = get_logger(__name__)
 
 class Pcsx2Generator(Generator):
 
-    def generate(self, system, rom, playersControllers, gameResolution):
+    def getInGameRatio(self, config, gameResolution, rom):
+        if getGfxRatioFromConfig(config, gameResolution) == "16:9" or (getGfxRatioFromConfig(config, gameResolution) == "Stretch" and gameResolution["width"] / float(gameResolution["height"]) > ((16.0 / 9.0) - 0.1)):
+            return 16/9
+        return 4/3
+
+    def generate(self, system, rom, playersControllers, guns, gameResolution):
         isAVX2 = checkAvx2()
-        sseLib = checkSseLib(isAVX2)
+
+        pcsx2ConfigDir = "/userdata/system/configs/PCSX2"
 
         # Config files
-        configureReg(batoceraFiles.pcsx2ConfigDir)
-        configureUI(batoceraFiles.pcsx2ConfigDir, batoceraFiles.BIOS, system.config, gameResolution)
-        configureVM(batoceraFiles.pcsx2ConfigDir, system)
-        configureGFX(batoceraFiles.pcsx2ConfigDir, system)
-        configureAudio(batoceraFiles.pcsx2ConfigDir)
+        configureReg(pcsx2ConfigDir)
+        configureUI(pcsx2ConfigDir, batoceraFiles.BIOS, system.config, gameResolution)
+        configureVM(pcsx2ConfigDir, system)
+        configureGFX(pcsx2ConfigDir, system)
+        configureAudio(pcsx2ConfigDir)
 
         if isAVX2:
-            commandArray = [batoceraFiles.batoceraBins['pcsx2_avx2'], rom]
+            commandArray = ["/usr/pcsx2-avx2/bin/pcsx2", rom]
         else:
-            commandArray = [batoceraFiles.batoceraBins['pcsx2'], rom]
+            commandArray = ["/usr/pcsx2/bin/pcsx2", rom]
 
         # Fullscreen
         commandArray.append("--fullscreen")
-
-        # No GUI
-        commandArray.append("--nogui")
 
         # Fullboot
         if system.isOptSet('fullboot') and system.config['fullboot'] == '0':
             eslog.debug("Fast Boot and skip BIOS")
         else:
             commandArray.append("--fullboot")
-
-        # Plugins
-        real_pluginsDir = batoceraFiles.pcsx2PluginsDir
-        if isAVX2:
-            real_pluginsDir = batoceraFiles.pcsx2Avx2PluginsDir
-        commandArray.append("--gs="   + real_pluginsDir + "/" + sseLib)
         
         # Arch
         arch = "x86"
@@ -56,9 +53,14 @@ class Pcsx2Generator(Generator):
             arch = content_file.read()
 
         env = {}
+
+        if isAVX2:
+            env["LD_LIBRARY_PATH"] = "/usr/pcsx2-avx2/lib"
+        else:
+            env["LD_LIBRARY_PATH"] = "/usr/pcsx2/lib"
+
         env["XDG_CONFIG_HOME"] = batoceraFiles.CONF
         env["SDL_GAMECONTROLLERCONFIG"] = controllersConfig.generateSdlGameControllerConfig(playersControllers)
-
         env["SDL_PADSORDERCONFIG"] = controllersConfig.generateSdlGameControllerPadsOrderConfig(playersControllers)
 
         if arch == "x86":
@@ -72,11 +74,11 @@ class Pcsx2Generator(Generator):
 
 def getGfxRatioFromConfig(config, gameResolution):
     # 2: 4:3 ; 1: 16:9
-    if "ratio" in config:
-        if config["ratio"] == "4/3" or (config["ratio"] == "auto" and gameResolution["width"] / float(gameResolution["height"]) < (16.0 / 9.0) - 0.1): # let a marge):
-            return "4:3"
-        else:
+    if "pcsx2_tv_mode" in config:
+        if config["pcsx2_tv_mode"] == "16/9":
             return "16:9"
+        elif config["pcsx2_tv_mode"] == "Stretch":
+            return "Stretch"
     return "4:3"
 
 def configureReg(config_directory):
@@ -85,10 +87,10 @@ def configureReg(config_directory):
         os.makedirs(config_directory)
     f = open(configFileName, "w")
     f.write("DocumentsFolderMode=User\n")
-    f.write("CustomDocumentsFolder=/usr/PCSX/bin\n")
+    f.write("CustomDocumentsFolder=/usr/pcsx2/bin\n")
     f.write("UseDefaultSettingsFolder=enabled\n")
     f.write("SettingsFolder=/userdata/system/configs/PCSX2/inis\n")
-    f.write("Install_Dir=/usr/PCSX/bin\n")
+    f.write("Install_Dir=/usr/pcsx2/bin\n")
     f.write("RunWizard=0\n")
     f.close()
 
@@ -221,9 +223,8 @@ def configureVM(config_directory, system):
     with open(configFileName, 'w') as configfile:
         pcsx2VMConfig.write(configfile)
 
-
 def configureGFX(config_directory, system):
-    configFileName = "{}/{}".format(config_directory + "/inis", "GSdx.ini")
+    configFileName = "{}/{}".format(config_directory + "/inis", "GS.ini")
     if not os.path.exists(config_directory):
         os.makedirs(config_directory + "/inis")
     
@@ -239,11 +240,23 @@ def configureGFX(config_directory, system):
     pcsx2GFXSettings.save("osd_indicator_enabled", 1)
     pcsx2GFXSettings.save("UserHacks", 1)
 
+    # Internal resolution
+    if system.isOptSet('internal_resolution'):
+        pcsx2GFXSettings.save("upscale_multiplier", system.config["internal_resolution"])
+    else:
+        pcsx2GFXSettings.save("upscale_multiplier", "1")
+
     # ShowFPS
     if system.isOptSet('showFPS') and system.getOptBoolean('showFPS'):
-        pcsx2GFXSettings.save("osd_monitor_enabled", 1)
+        pcsx2GFXSettings.save("OsdShowFPS", 1)
+        pcsx2GFXSettings.save("OsdShowGSStats", 1)
+        pcsx2GFXSettings.save("OsdShowCPU", 1)
+        pcsx2GFXSettings.save("OsdShowSpeed", 1)
     else:
-        pcsx2GFXSettings.save("osd_monitor_enabled", 0)
+        pcsx2GFXSettings.save("OsdShowFPS", 0)
+        pcsx2GFXSettings.save("OsdShowGSStats", 0)
+        pcsx2GFXSettings.save("OsdShowCPU", 0)
+        pcsx2GFXSettings.save("OsdShowSpeed", 0)
 
     # Graphical Backend
     if system.isOptSet('gfxbackend'):
@@ -251,17 +264,11 @@ def configureGFX(config_directory, system):
     else:
         pcsx2GFXSettings.save("Renderer", "12")
 
-    # Internal resolution
-    if system.isOptSet('internal_resolution'):
-        pcsx2GFXSettings.save("upscale_multiplier", system.config["internal_resolution"])
-    else:
-        pcsx2GFXSettings.save("upscale_multiplier", "1")
-
     # Skipdraw Hack
     if system.isOptSet('skipdraw'):
-        pcsx2GFXSettings.save('UserHacks_SkipDraw', system.config['skipdraw'])
+        pcsx2GFXSettings.save('UserHacks_SkipDraw_Start', system.config['skipdraw'])
     else:
-        pcsx2GFXSettings.save('UserHacks_SkipDraw', '0')
+        pcsx2GFXSettings.save('UserHacks_SkipDraw_Start', '0')
 
     # Align sprite Hack
     if system.isOptSet('align_sprite'):
@@ -322,9 +329,13 @@ def configureUI(config_directory, bios_directory, system_config, gameResolution)
             iniConfig.add_section(section)
     
     iniConfig.set("NO_SECTION","EnablePresets","disabled")
+    # manually allow speed hacks
+    iniConfig.set("NO_SECTION","EnableSpeedHacks","enabled")
     iniConfig.set("ProgramLog", "Visible",     "disabled")
     iniConfig.set("Filenames",  "BIOS",        biosFile)
     iniConfig.set("GSWindow",   "AspectRatio", resolution)
+    # Zoom: 100 = fit to screen, 0 = fill the screen, anywhere between = custom
+    iniConfig.set("GSWindow", "Zoom", "100")
 
     # Save the ini file
     if not os.path.exists(os.path.dirname(configFileName)):
@@ -365,6 +376,3 @@ def checkAvx2():
         if re.match("^flags[\t ]*:.* avx2", line):
             return True
     return False
-
-def checkSseLib(isAVX2):
-    return "libGSdx.so"

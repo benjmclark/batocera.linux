@@ -1,10 +1,10 @@
 ################################################################################
 #
-# POKEMINI
+# libretro-pokemini
 #
 ################################################################################
-# Version.: Commits on Aug 11, 2021
-LIBRETRO_POKEMINI_VERSION = 3d59c6dd400bc8d2115270d3c82aa17dab16d442
+# Version: Commits on Apr 13, 2022
+LIBRETRO_POKEMINI_VERSION = 684e7ea0950f4df48cd1fbf1160e6af3c262c9f0
 LIBRETRO_POKEMINI_SITE = $(call github,libretro,PokeMini,$(LIBRETRO_POKEMINI_VERSION))
 LIBRETRO_POKEMINI_LICENSE = GPLv3
 
@@ -13,8 +13,18 @@ LIBRETRO_POKEMINI_PLATFORM = $(LIBRETRO_PLATFORM)
 ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_S812),y)
 LIBRETRO_POKEMINI_PLATFORM = armv
 
-else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI3),y)
-LIBRETRO_POKEMINI_PLATFORM = rpi3_64
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI1),y)
+LIBRETRO_POKEMINI_PLATFORM = rpi1
+
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI2),y)
+LIBRETRO_POKEMINI_PLATFORM = rpi2
+
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI3)$(BR2_PACKAGE_BATOCERA_TARGET_RPIZERO2),y)
+    ifeq ($(BR2_arm),y)
+        LIBRETRO_POKEMINI_PLATFORM = rpi3
+    else
+        LIBRETRO_POKEMINI_PLATFORM = rpi3_64
+    endif
 
 else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI4),y)
 LIBRETRO_POKEMINI_PLATFORM = rpi4

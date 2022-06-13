@@ -1,10 +1,10 @@
 ################################################################################
 #
-# NXENGINE
+# libretro-nxengine
 #
 ################################################################################
-# Version.: Commits on Aug 17, 2021
-LIBRETRO_NXENGINE_VERSION = 1ae5ebbd3de53ba51620ca24e919c625552c4df9
+# Version: Commits on Mar 2, 2022
+LIBRETRO_NXENGINE_VERSION = fc102fa3eeda1a0133f80474d6671af4cf7612a6
 LIBRETRO_NXENGINE_SITE = $(call github,libretro,nxengine-libretro,$(LIBRETRO_NXENGINE_VERSION))
 LIBRETRO_NXENGINE_LICENSE = GPLv3
 
@@ -13,8 +13,18 @@ LIBRETRO_NXENGINE_PLATFORM = $(LIBRETRO_PLATFORM)
 ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_S812),y)
 LIBRETRO_NXENGINE_PLATFORM = armv
 
-else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI3),y)
-LIBRETRO_NXENGINE_PLATFORM = rpi3_64
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI1),y)
+LIBRETRO_NXENGINE_PLATFORM = rpi1
+
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI2),y)
+LIBRETRO_NXENGINE_PLATFORM = rpi2
+
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI3)$(BR2_PACKAGE_BATOCERA_TARGET_RPIZERO2),y)
+    ifeq ($(BR2_arm),y)
+        LIBRETRO_NXENGINE_PLATFORM = rpi3
+    else
+        LIBRETRO_NXENGINE_PLATFORM = rpi3_64
+    endif
 
 else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RPI4),y)
 LIBRETRO_NXENGINE_PLATFORM = rpi4_64

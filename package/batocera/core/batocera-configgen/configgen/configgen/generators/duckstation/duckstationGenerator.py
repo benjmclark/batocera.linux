@@ -13,12 +13,12 @@ from os import environ
 eslog = get_logger(__name__)
 
 class DuckstationGenerator(Generator):
-    def generate(self, system, rom, playersControllers, gameResolution):
+    def generate(self, system, rom, playersControllers, guns, gameResolution):
         # Test if it's a m3u file
         if os.path.splitext(rom)[1] == ".m3u":
             rom = rewriteM3uFullPath(rom)
 
-        commandArray = ["duckstation", "-batch", "-fullscreen", "--", rom ]
+        commandArray = ["duckstation-nogui", "-batch", "-fullscreen", "--", rom ]
 
         settings = configparser.ConfigParser(interpolation=None)
         # To prevent ConfigParser from converting to lower case
@@ -37,6 +37,7 @@ class DuckstationGenerator(Generator):
         settings.set("Main", "ConfirmPowerOff", "false")
         # Force Fullscreen
         settings.set("Main", "EnableFullscreenUI", "true")
+        settings.set("Main", "StartFullscreen", "true")
         # Controller backend
         settings.set("Main","ControllerBackend", "SDL")
         # Force applying game Settings fixes
@@ -58,18 +59,16 @@ class DuckstationGenerator(Generator):
             settings.set("Main","RewindSaveSlots", "15")
         elif system.isOptSet("duckstation_rewind") and system.config["duckstation_rewind"] == '10':
             settings.set("Main","RewindSaveSlots", "100")
-            settings.set("Main","RewindFrequency", "0,100000")
+            settings.set("Main","RewindFrequency", "0.100000")
         elif system.isOptSet("duckstation_rewind") and system.config["duckstation_rewind"] == '5':
             settings.set("Main","RewindSaveSlots", "50")
-            settings.set("Main","RewindFrequency", "0,100000")
+            settings.set("Main","RewindFrequency", "0.050000")
         else:
             settings.set("Main","RewindEnable", "false")
 
         ## [UI]
         if not settings.has_section("UI"):
             settings.add_section("UI")
-        # Show Messages
-        settings.set("UI", "ShowOSDMessages", "true")
 
         ## [CONSOLE]
         if not settings.has_section("Console"):
@@ -83,7 +82,6 @@ class DuckstationGenerator(Generator):
             settings.set("Console", "Region", "NTSC-U")
         else:
             settings.set("Console", "Region", "Auto")
-
 
         ## [BIOS]
         if not settings.has_section("BIOS"):
@@ -147,8 +145,17 @@ class DuckstationGenerator(Generator):
            settings.set("GPU", "TextureFilter", system.config["duckstation_texture_filtering"])
         else:
            settings.set("GPU", "TextureFilter", "Nearest")
-
-
+        # PGXP - enabled by default
+        if system.isOptSet("duckstation_pgxp"):
+           settings.set("GPU", "PGXPEnable", system.config["duckstation_pgxp"])
+           settings.set("GPU", "PGXPCulling", system.config["duckstation_pgxp"])
+           settings.set("GPU", "PGXPTextureCorrection", system.config["duckstation_pgxp"])
+           settings.set("GPU", "PGXPPreserveProjFP", system.config["duckstation_pgxp"])
+        else:
+           settings.set("GPU", "PGXPEnable", "true")
+           settings.set("GPU", "PGXPCulling", "true")
+           settings.set("GPU", "PGXPTextureCorrection", "true")
+           settings.set("GPU", "PGXPPreserveProjFP", "true")
 
         ## [DISPLAY]
         if not settings.has_section("Display"):
@@ -170,7 +177,11 @@ class DuckstationGenerator(Generator):
             settings.set("Display", "DisplayAllFrames", "true")
         else:
             settings.set("Display", "DisplayAllFrames", "false")
-
+        # OSD Messages
+        if system.isOptSet("duckstation_osd"):
+            settings.set("Display", "ShowOSDMessages", system.config["duckstation_osd"])
+        else:
+            settings.set("Display", "ShowOSDMessages", "false")
 
         ## [CHEEVOS]
         if not settings.has_section("Cheevos"):
@@ -182,7 +193,7 @@ class DuckstationGenerator(Generator):
             username  = system.config.get('retroachievements.username', "")
             password  = system.config.get('retroachievements.password', "")
             hardcore  = system.config.get('retroachievements.hardcore', "")
-            login_cmd = "dorequest.php?r=login&u={}&p={}".format(username, password)
+            login_cmd = f"dorequest.php?r=login&u={username}&p={password}"
             try:
                 cnx = httplib2.Http()
             except:
@@ -190,12 +201,12 @@ class DuckstationGenerator(Generator):
             try:
                 res, rout = cnx.request(login_url + login_cmd, method="GET", body=None, headers=headers)
                 if (res.status != 200):
-                    eslog.warning("ERROR: RetroAchievements.org responded with #{} [{}] {}".format(res.status, res.reason, rout))
+                    eslog.warning(f"ERROR: RetroAchievements.org responded with #{res.status} [{res.reason}] {rout}")
                     settings.set("Cheevos", "Enabled",  "false")
                 else:
-                    parsedout = json.loads((rout.decode('utf-8')))
+                    parsedout = json.loads(rout.decode('utf-8'))
                     if not parsedout['Success']:
-                        eslog.warning("ERROR: RetroAchievements login failed with ({})".format(str(parsedout)))
+                        eslog.warning(f"ERROR: RetroAchievements login failed with ({str(parsedout)})")
                     token = parsedout['Token']
                     settings.set("Cheevos", "Enabled",       "true")
                     settings.set("Cheevos", "Username",      username)
@@ -210,13 +221,12 @@ class DuckstationGenerator(Generator):
                     #settings.set("Cheevos", "RichPresence",  "true")             # Enable rich presence information will be collected and sent to the server where supported
                     #settings.set("Cheevos", "TestMode",      "false")            # DuckStation will assume all achievements are locked and not send any unlock notifications to the server.
 
-                    eslog.debug("Duckstation RetroAchievements enabled for {}".format(username))
+                    eslog.debug(f"Duckstation RetroAchievements enabled for {username}")
             except Exception as e:
-                eslog.error("ERROR: Impossible to get a RetroAchievements token ({})".format(e))
+                eslog.error(f"ERROR: Impossible to get a RetroAchievements token ({e})")
                 settings.set("Cheevos", "Enabled",           "false")
         else:
             settings.set("Cheevos", "Enabled",               "false")
-
 
         ## [CONTROLLERPORTS]
         if not settings.has_section("ControllerPorts"):
@@ -226,7 +236,6 @@ class DuckstationGenerator(Generator):
             settings.set("ControllerPorts", "MultitapMode", system.config["duckstation_multitap"])
         else:
             settings.set("ControllerPorts", "MultitapMode", "Disabled")
-
 
         ## [TEXTURE REPLACEMENT]
         if not settings.has_section("TextureReplacements"):
@@ -242,10 +251,8 @@ class DuckstationGenerator(Generator):
             settings.set("TextureReplacements", "EnableVRAMWriteReplacements", "true")
             settings.set("TextureReplacements", "PreloadTextures",  "false")
 
-
         ## [CONTROLLERS]
         configurePads(settings, playersControllers, system)
-
 
         ## [HOTKEYS]
         if not settings.has_section("Hotkeys"):
@@ -260,6 +267,7 @@ class DuckstationGenerator(Generator):
         settings.set("Hotkeys", "SelectNextSaveStateSlot",     "Keyboard/F4")
         settings.set("Hotkeys", "Screenshot",                  "Keyboard/F10")
         settings.set("Hotkeys", "Rewind",                      "Keyboard/F5")
+        settings.set("Hotkeys", "OpenQuickMenu",               "Keyboard/F7")
         # Show FPS (Debug)
         if system.isOptSet("showFPS") and system.getOptBoolean("showFPS"):
             settings.set("Display", "ShowFPS",        "true")
@@ -272,22 +280,23 @@ class DuckstationGenerator(Generator):
             settings.set("Display", "ShowVPS",        "false")
             settings.set("Display", "ShowResolution", "false")
 
-
         # Save config
         if not os.path.exists(os.path.dirname(settings_path)):
             os.makedirs(os.path.dirname(settings_path))
         with open(settings_path, 'w') as configfile:
             settings.write(configfile)
+        
         env = {"XDG_DATA_HOME":batoceraFiles.CONF, "QT_QPA_PLATFORM":"xcb"}
         return Command.Command(array=commandArray, env=env)
 
-
 def getGfxRatioFromConfig(config, gameResolution):
-    #ratioIndexes = ["Auto (Game Native)", "4:3", "16:9", "1:1", "1:1 PAR", "2:1 (VRAM 1:1)", "3:2", "5:4", "8:7", "16:10", "19:9", "20:9", "32:9"]
+    #ratioIndexes = ["Auto (Game Native)", "Auto (Match Window)", "4:3", "16:9", "1:1", "1:1 PAR", "2:1 (VRAM 1:1)", "3:2", "5:4", "8:7", "16:10", "19:9", "20:9", "32:9"]
     # 2: 4:3 ; 1: 16:9  ; 0: auto
     if "ratio" in config:
         if config["ratio"] == "2/1":
             return "2:1 (VRAM 1:1)"
+        elif config["ratio"] == "full":
+            return "Auto (Match Window)"
         else:
             return config["ratio"].replace("/",":")
 
@@ -295,7 +304,6 @@ def getGfxRatioFromConfig(config, gameResolution):
         return "16:9"
 
     return "4:3"
-
 
 def configurePads(settings, playersControllers, system):
     mappings = {
@@ -335,9 +343,11 @@ def configurePads(settings, playersControllers, system):
             settings.add_section(controller)
 
         # Controller Type
+        ctrlType = "AnalogController"
         settings.set(controller, "Type", "AnalogController") # defaults to AnalogController to make dpad to joystick work by default
         if system.isOptSet("duckstation_" + controller) and system.config['duckstation_' + controller] != 'DigitalController':
             settings.set(controller, "Type", system.config["duckstation_" + controller])
+            ctrlType = system.config["duckstation_" + controller]
 
         # Rumble
         controllerRumbleList = {'AnalogController', 'NamcoGunCon', 'NeGcon'};
@@ -356,7 +366,15 @@ def configurePads(settings, playersControllers, system):
 
         for mapping in mappings:
             if mappings[mapping] in pad.inputs:
-                settings.set(controller, mapping, "Controller" + str(pad.index) + "/" + input2definition(pad.inputs[mappings[mapping]]))
+                # mapping workaround - for l2 & r2 if axis, require positive value
+                if mappings[mapping] == "l2" or mappings[mapping] == "r2" and ctrlType == "AnalogController":
+                    trigger=input2definition(pad.inputs[mappings[mapping]])
+                    if "Axis" in trigger:
+                        settings.set(controller, mapping, "Controller" + str(pad.index) + "/+" + input2definition(pad.inputs[mappings[mapping]]))
+                    else:
+                        settings.set(controller, mapping, "Controller" + str(pad.index) + "/" + input2definition(pad.inputs[mappings[mapping]]))
+                else:
+                    settings.set(controller, mapping, "Controller" + str(pad.index) + "/" + input2definition(pad.inputs[mappings[mapping]]))
 
         controllerGunList = {'NamcoGunCon', 'NeGcon'};
         # Testing if Gun, add specific keys
@@ -379,7 +397,6 @@ def configurePads(settings, playersControllers, system):
 
         nplayer = nplayer + 1
 
-
 def input2definition(input):
     if input.type == "button":
         return "Button" + str(input.id)
@@ -396,10 +413,9 @@ def input2definition(input):
         return "Axis" + str(input.id)
     return "unknown"
 
-
 def getLangFromEnvironment():
     lang = environ['LANG'][:5]
-    availableLanguages = { "en_US": "",
+    availableLanguages = { "en_US": "en",
                            "de_DE": "de",
                            "fr_FR": "fr",
                            "es_ES": "es",
@@ -417,7 +433,6 @@ def getLangFromEnvironment():
     if lang in availableLanguages:
         return availableLanguages[lang]
     return availableLanguages["en_US"]
-
 
 def rewriteM3uFullPath(m3u):                                                                    # Rewrite a clean m3u file with valid fullpath
     # get initialm3u

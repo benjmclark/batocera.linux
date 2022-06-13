@@ -36,8 +36,7 @@ def createPPSSPPConfig(iniConfig, system):
     if not iniConfig.has_section("Graphics"):
         iniConfig.add_section("Graphics")
 
-    # Graphics Backend : TODO VULKAN support (Not used for now)
-    iniConfig.set("Graphics", "FailedGraphicsBackends", "0 (OPENGL)")
+    # Graphics Backend
     if system.isOptSet('gfxbackend'):
         iniConfig.set("Graphics", "GraphicsBackend", system.config["gfxbackend"])
     else:
@@ -50,28 +49,38 @@ def createPPSSPPConfig(iniConfig, system):
         iniConfig.set("Graphics", "ShowFPSCounter", "0")
 
     # Frameskip
-    iniConfig.set("Graphics", "FrameSkipType", "0") # Use number and not pourcent
-    iniConfig.set("Graphics", "AutoFrameSkip", "False")
-    if system.isOptSet("frameskip"):
-        if system.config["frameskip"] == "automatic":
-            iniConfig.set("Graphics", "AutoFrameSkip", "True")
-            iniConfig.set("Graphics", "FrameSkip",     "1")
-        else:
-            iniConfig.set("Graphics", "FrameSkip", str(system.config["frameskip"]))
+    iniConfig.set("Graphics", "FrameSkipType", "0") # Use number and not percent
+    if system.isOptSet("frameskip") and not system.config["frameskip"] == "automatic":
+        iniConfig.set("Graphics", "FrameSkip", str(system.config["frameskip"]))
+    elif system.isOptSet('rendering_mode') and system.getOptBoolean('rendering_mode') == False:
+        iniConfig.set("Graphics", "FrameSkip", "0")
     else:
-        iniConfig.set("Graphics", "FrameSkip",     "0")
+        iniConfig.set("Graphics", "FrameSkip", "2")
+
+    # Buffered rendering
+    if system.isOptSet('rendering_mode') and system.getOptBoolean('rendering_mode') == False:
+        iniConfig.set("Graphics", "RenderingMode", "0")
+        # Have to force autoframeskip off here otherwise PPSSPP sets rendering mode back to 1.
+        iniConfig.set("Graphics", "AutoFrameSkip", "False")
+    else:
+        iniConfig.set("Graphics", "RenderingMode", "1")
+        # Both internal resolution and auto frameskip are dependent on buffered rendering being on, only check these if the user is actually using buffered rendering.
+        # Internal Resolution
+        if system.isOptSet('internal_resolution'):
+            iniConfig.set("Graphics", "InternalResolution", str(system.config["internal_resolution"]))
+        else:
+            iniConfig.set("Graphics", "InternalResolution", "1")
+        # Auto frameskip
+        if system.isOptSet("autoframeskip") and system.getOptBoolean("autoframeskip") == False:
+            iniConfig.set("Graphics", "AutoFrameSkip", "False")
+        else:
+            iniConfig.set("Graphics", "AutoFrameSkip", "True")
 
     # VSync Interval
     if system.isOptSet('vsyncinterval') and system.getOptBoolean('vsyncinterval') == False:
         iniConfig.set("Graphics", "VSyncInterval", "False")
     else:
         iniConfig.set("Graphics", "VSyncInterval", "True")
-
-    # Internal Resolution
-    if system.isOptSet('internal_resolution'):
-        iniConfig.set("Graphics", "InternalResolution", str(system.config["internal_resolution"]))
-    else:
-        iniConfig.set("Graphics", "InternalResolution", "1")
 
     # Texture Scaling Level
     if system.isOptSet('texture_scaling_level'):
@@ -123,6 +132,15 @@ def createPPSSPPConfig(iniConfig, system):
         iniConfig.set("General", "EnableCheats", system.config["enable_cheats"])
     else:
         iniConfig.set("General", "EnableCheats", "False")
+    # Don't check for a new version
+    iniConfig.set("General", "CheckForNewVersion", "False")
+
+    ## [UPGRADE] - don't upgrade
+    if not iniConfig.has_section("Upgrade"):
+        iniConfig.add_section("Upgrade")
+    iniConfig.set("Upgrade", "UpgradeMessage", "")
+    iniConfig.set("Upgrade", "UpgradeVersion", "")
+    iniConfig.set("Upgrade", "DismissedVersion", "")
 
     # Custom : allow the user to configure directly PPSSPP via batocera.conf via lines like : ppsspp.section.option=value
     for user_config in system.config:

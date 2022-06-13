@@ -1,5 +1,3 @@
-psp:
-  options:
-    frameskip: automatic
-    frameskiptype: 2
-    internalresolution: 2
+fmtowns:
+  emulator: libretro
+  core:     mess

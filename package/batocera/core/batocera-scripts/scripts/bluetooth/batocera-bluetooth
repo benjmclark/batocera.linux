@@ -8,6 +8,7 @@ do_help() {
     echo "${1} remove <device address>" >&2
     echo "${1} save" >&2
     echo "${1} restore" >&2
+    echo "${1} live_devices" >&2
 }
 
 do_save() {
@@ -47,13 +48,44 @@ do_remove() {
     return 0
 }
 
+do_devlist() {
+    if ! > /var/run/bt_listing
+    then
+	exit 1
+    fi
+
+    NPID=$(cat /var/run/bluetooth-agent.pid)
+    trap "kill -12 ${NPID} ; rm -f /var/run/bt_listing" 2 3
+
+    kill -10 "${NPID}"
+    # ok, not 10 lines should happen during this instant (between kill and tail)
+    tail -f /var/run/bt_listing
+}
+
 do_trust() {
+    TRUSTTYPE=$1
     NPID=$(cat /var/run/bluetooth-agent.pid)
     test -z "${NPID}" && return 0
 
     touch "/var/run/bt_status" || retrun 1
     LAST_MSG=$(cat "/var/run/bt_status")
-    
+
+    # empty, audio, pad
+    if test "${TRUSTTYPE}" = "audio" -o "${TRUSTTYPE}" = "pad"
+    then
+	echo "${TRUSTTYPE}" > /var/run/bt_types || return 1
+    else
+	echo > /var/run/bt_types || return 1
+    fi
+
+    # trust device
+    if echo "${TRUSTTYPE}" | grep -qE "^([0-9A-F]{2}:){5}[0-9A-F]{2}$"
+    then
+	echo "${TRUSTTYPE}" > /var/run/bt_device || return 1
+    else
+	echo "" > /var/run/bt_device || return 1
+    fi
+
     # start discovering
     kill -10 "${NPID}"
 
@@ -68,7 +100,19 @@ do_trust() {
 	    LAST_MSG="${NEW_MSG}"
 	    echo "${NEW_MSG}"
 	fi
-	sleep 1
+
+	# check is in list and uniq trusting
+	if echo "${TRUSTTYPE}" | grep -qE "^([0-9A-F]{2}:){5}[0-9A-F]{2}$"
+	then
+	    if do_list | grep -qE "^${TRUSTTYPE} "
+	    then
+		N=0
+	    fi
+	fi
+
+	# wait
+	test $N -gt 0 && sleep 1
+
 	N=$((N-1))
     done
 
@@ -80,7 +124,7 @@ do_trust() {
 
 do_starttrust() {
     NPID=$(cat /var/run/bluetooth-agent.pid)
-    test -z "${NPID}" && exit 0
+    test -z "${NPID}" && return 0
 
     # start discovering
     kill -10 "${NPID}"
@@ -88,7 +132,7 @@ do_starttrust() {
 
 do_stoptrust() {
     NPID=$(cat /var/run/bluetooth-agent.pid)
-    test -z "${NPID}" && exit 0
+    test -z "${NPID}" && return 0
 
     # stop discovering
     kill -12 "${NPID}"
@@ -101,7 +145,14 @@ case "${ACTION}" in
 	do_list
 	;;
     "trust")
-	do_trust
+	TRUSTTYPE=$2
+	do_trust "${TRUSTTYPE}"
+	;;
+    "trust-audio")
+	do_trust audio
+	;;
+    "trust-pad")
+	do_trust pad
 	;;
     "starttrust")
 	do_starttrust
@@ -123,6 +174,9 @@ case "${ACTION}" in
 	;;
     "restore")
 	do_restore
+	;;
+    "live_devices")
+	do_devlist
 	;;
     *)
 	do_help "${0}"
